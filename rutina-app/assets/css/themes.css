@@ -1,0 +1,131 @@
+/* ============================================================
+   RUTINA APP – THEMES.CSS
+   Variables de color para temas claro y oscuro.
+   El tema se aplica automáticamente según la hora del día
+   o la preferencia manual del usuario.
+   ============================================================ */
+
+/* ---------- TEMA OSCURO (por defecto) ---------- */
+:root,
+[data-theme="dark"] {
+  --bg-primary:    #0f0f1a;
+  --bg-secondary:  #1a1a2e;
+  --bg-card:       #16213e;
+  --bg-elevated:   #1e2a45;
+  --bg-input:      #1a2540;
+  --bg-overlay:    rgba(0, 0, 0, 0.7);
+
+  --text-primary:   #e8eaf6;
+  --text-secondary: #9fa8da;
+  --text-muted:     #5c6bc0;
+  --text-on-accent: #ffffff;
+
+  --accent:        #6C63FF;
+  --accent-light:  #8b84ff;
+  --accent-dark:   #4a42d4;
+  --accent-alpha:  rgba(108, 99, 255, 0.15);
+
+  --success:       #00e676;
+  --success-alpha: rgba(0, 230, 118, 0.15);
+  --warning:       #ffab40;
+  --warning-alpha: rgba(255, 171, 64, 0.15);
+  --danger:        #ff5252;
+  --danger-alpha:  rgba(255, 82, 82, 0.15);
+  --info:          #40c4ff;
+  --info-alpha:    rgba(64, 196, 255, 0.15);
+
+  --gym-color:     #ff6b6b;
+  --meals-color:   #ffd93d;
+  --sleep-color:   #6bcb77;
+  --cal-color:     #4d96ff;
+  --stats-color:   #c77dff;
+  --goals-color:   #ff9f43;
+
+  --border:        rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
+
+  --shadow-sm:  0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md:  0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-lg:  0 8px 40px rgba(0, 0, 0, 0.5);
+
+  --nav-height: 64px;
+  --header-height: 60px;
+  --border-radius: 16px;
+  --border-radius-sm: 8px;
+  --border-radius-lg: 24px;
+
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.25s ease;
+  --transition-slow: 0.4s ease;
+
+  --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* ---------- TEMA CLARO ---------- */
+[data-theme="light"] {
+  --bg-primary:    #f0f2ff;
+  --bg-secondary:  #e8eaf6;
+  --bg-card:       #ffffff;
+  --bg-elevated:   #f5f5ff;
+  --bg-input:      #eef0ff;
+  --bg-overlay:    rgba(0, 0, 0, 0.45);
+
+  --text-primary:   #1a1a2e;
+  --text-secondary: #3949ab;
+  --text-muted:     #7986cb;
+  --text-on-accent: #ffffff;
+
+  --accent:        #5c54f5;
+  --accent-light:  #7b74f7;
+  --accent-dark:   #3d36c9;
+  --accent-alpha:  rgba(92, 84, 245, 0.12);
+
+  --success:       #00c853;
+  --success-alpha: rgba(0, 200, 83, 0.12);
+  --warning:       #ff8f00;
+  --warning-alpha: rgba(255, 143, 0, 0.12);
+  --danger:        #e53935;
+  --danger-alpha:  rgba(229, 57, 53, 0.12);
+  --info:          #0288d1;
+  --info-alpha:    rgba(2, 136, 209, 0.12);
+
+  --border:        rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.15);
+
+  --shadow-sm:  0 2px 8px rgba(92, 84, 245, 0.08);
+  --shadow-md:  0 4px 20px rgba(92, 84, 245, 0.12);
+  --shadow-lg:  0 8px 40px rgba(92, 84, 245, 0.18);
+}
+
+/* ---------- TEMA AUTOMÁTICO (por preferencia del sistema) ---------- */
+@media (prefers-color-scheme: light) {
+  [data-theme="auto"] {
+    --bg-primary:    #f0f2ff;
+    --bg-secondary:  #e8eaf6;
+    --bg-card:       #ffffff;
+    --bg-elevated:   #f5f5ff;
+    --bg-input:      #eef0ff;
+    --bg-overlay:    rgba(0, 0, 0, 0.45);
+    --text-primary:   #1a1a2e;
+    --text-secondary: #3949ab;
+    --text-muted:     #7986cb;
+    --text-on-accent: #ffffff;
+    --accent:        #5c54f5;
+    --accent-light:  #7b74f7;
+    --accent-dark:   #3d36c9;
+    --accent-alpha:  rgba(92, 84, 245, 0.12);
+    --success:       #00c853;
+    --success-alpha: rgba(0, 200, 83, 0.12);
+    --warning:       #ff8f00;
+    --warning-alpha: rgba(255, 143, 0, 0.12);
+    --danger:        #e53935;
+    --danger-alpha:  rgba(229, 57, 53, 0.12);
+    --info:          #0288d1;
+    --info-alpha:    rgba(2, 136, 209, 0.12);
+    --border:        rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.15);
+    --shadow-sm:  0 2px 8px rgba(92, 84, 245, 0.08);
+    --shadow-md:  0 4px 20px rgba(92, 84, 245, 0.12);
+    --shadow-lg:  0 8px 40px rgba(92, 84, 245, 0.18);
+  }
+}

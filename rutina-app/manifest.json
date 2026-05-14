@@ -1,0 +1,44 @@
+{
+  "name": "Rutina App",
+  "short_name": "Rutina",
+  "description": "Gestiona tu día a día: gimnasio, comidas, sueño, calendario y más.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f0f1a",
+  "theme_color": "#6C63FF",
+  "lang": "es",
+  "dir": "ltr",
+  "categories": ["health", "fitness", "productivity"],
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Gimnasio",
+      "short_name": "Gym",
+      "description": "Ir al módulo de gimnasio",
+      "url": "./index.html#gym",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Comidas",
+      "short_name": "Comidas",
+      "description": "Ir al módulo de comidas",
+      "url": "./index.html#meals",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

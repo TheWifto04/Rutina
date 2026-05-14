@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="auto">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Rutina App – Gestiona tu día a día: gimnasio, comidas, sueño, calendario y más." />
+  <meta name="theme-color" content="#6C63FF" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Rutina App" />
+
+  <title>Rutina App</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Apple Touch Icon -->
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="assets/css/themes.css" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <!-- ========== PANTALLA DE BLOQUEO ========== -->
+  <div id="lock-screen" class="lock-screen hidden" role="dialog" aria-modal="true" aria-label="Pantalla de bloqueo">
+    <div class="lock-content">
+      <div class="lock-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <h2>Rutina App</h2>
+      <p>Ingresa tu PIN para continuar</p>
+      <div class="pin-display" aria-live="polite">
+        <span class="pin-dot" data-index="0"></span>
+        <span class="pin-dot" data-index="1"></span>
+        <span class="pin-dot" data-index="2"></span>
+        <span class="pin-dot" data-index="3"></span>
+      </div>
+      <div class="pin-pad" role="group" aria-label="Teclado numérico">
+        <button class="pin-btn" data-digit="1" aria-label="1">1</button>
+        <button class="pin-btn" data-digit="2" aria-label="2">2</button>
+        <button class="pin-btn" data-digit="3" aria-label="3">3</button>
+        <button class="pin-btn" data-digit="4" aria-label="4">4</button>
+        <button class="pin-btn" data-digit="5" aria-label="5">5</button>
+        <button class="pin-btn" data-digit="6" aria-label="6">6</button>
+        <button class="pin-btn" data-digit="7" aria-label="7">7</button>
+        <button class="pin-btn" data-digit="8" aria-label="8">8</button>
+        <button class="pin-btn" data-digit="9" aria-label="9">9</button>
+        <button class="pin-btn pin-clear" data-action="clear" aria-label="Borrar">⌫</button>
+        <button class="pin-btn" data-digit="0" aria-label="0">0</button>
+        <button class="pin-btn pin-ok" data-action="ok" aria-label="Aceptar">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ONBOARDING ========== -->
+  <div id="onboarding-screen" class="onboarding-screen hidden" role="dialog" aria-modal="true" aria-label="Bienvenida">
+  </div>
+
+  <!-- ========== APP SHELL ========== -->
+  <div id="app-shell" class="app-shell hidden">
+
+    <!-- Header -->
+    <header class="app-header" role="banner">
+      <div class="header-left">
+        <button id="btn-menu" class="icon-btn" aria-label="Menú" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="header-center">
+        <h1 id="page-title" class="page-title">Inicio</h1>
+      </div>
+      <div class="header-right">
+        <button id="btn-theme" class="icon-btn" aria-label="Cambiar tema">
+          <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="hidden">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <button id="btn-notif" class="icon-btn notif-btn" aria-label="Notificaciones">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span id="notif-badge" class="notif-badge hidden">0</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Contenido principal -->
+    <main id="main-content" class="main-content" role="main" tabindex="-1">
+      <!-- Las vistas se renderizan aquí dinámicamente -->
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+      <a href="#home" class="nav-item active" data-route="home" aria-label="Inicio" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span>Inicio</span>
+      </a>
+      <a href="#gym" class="nav-item" data-route="gym" aria-label="Gimnasio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M6.5 6.5h11M6.5 17.5h11M3 12h18M7 3l-2 4h14l-2-4M7 21l-2-4h14l-2 4"/>
+        </svg>
+        <span>Gym</span>
+      </a>
+      <a href="#meals" class="nav-item" data-route="meals" aria-label="Comidas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
+          <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+          <line x1="6" y1="1" x2="6" y2="4"/>
+          <line x1="10" y1="1" x2="10" y2="4"/>
+          <line x1="14" y1="1" x2="14" y2="4"/>
+        </svg>
+        <span>Comidas</span>
+      </a>
+      <a href="#sleep" class="nav-item" data-route="sleep" aria-label="Sueño">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M17 18a5 5 0 0 0-10 0"/>
+          <line x1="12" y1="2" x2="12" y2="9"/>
+          <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/>
+          <line x1="2" y1="18" x2="4" y2="18"/>
+          <line x1="20" y1="18" x2="22" y2="18"/>
+          <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/>
+          <line x1="23" y1="22" x2="1" y2="22"/>
+          <polyline points="16 5 12 9 8 5"/>
+        </svg>
+        <span>Sueño</span>
+      </a>
+      <a href="#stats" class="nav-item" data-route="stats" aria-label="Estadísticas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+        <span>Stats</span>
+      </a>
+      <a href="#calendar" class="nav-item" data-route="calendar" aria-label="Calendario">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span>Agenda</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- ========== DRAWER / MENÚ LATERAL ========== -->
+  <aside id="side-drawer" class="side-drawer" role="complementary" aria-label="Menú lateral" aria-hidden="true">
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <div class="user-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <div class="user-info">
+          <p id="drawer-username" class="user-name">Usuario</p>
+          <p class="user-level" id="drawer-level">Nivel 1</p>
+        </div>
+      </div>
+      <nav class="drawer-nav" aria-label="Menú de opciones">
+        <a href="#goals" class="drawer-item" data-route="goals">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          Objetivos y Logros
+        </a>
+        <a href="#home" class="drawer-item" data-route="settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M20 12h2M2 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
+          Configuración
+        </a>
+        <button class="drawer-item" id="btn-export">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar datos
+        </button>
+        <button class="drawer-item" id="btn-import">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Importar datos
+        </button>
+        <button class="drawer-item" id="btn-pin-setup">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Configurar PIN
+        </button>
+        <button class="drawer-item" id="btn-notif-setup">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Notificaciones
+        </button>
+      </nav>
+      <div class="drawer-footer">
+        <p class="app-version">Rutina App v1.0.0</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========== TOAST / ALERTAS ========== -->
+  <div id="toast-container" class="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ========== MODAL GENÉRICO ========== -->
+  <div id="modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-box" id="modal-box">
+      <button class="modal-close" id="modal-close" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- ========== INPUT FILE OCULTO (importar) ========== -->
+  <input type="file" id="file-import" accept=".json,.csv" class="hidden" aria-hidden="true" />
+
+  <!-- ========== SCRIPTS ========== -->
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/storage.js"></script>
+  <script src="assets/js/modules/notifications.js"></script>
+  <script src="assets/js/modules/onboarding.js"></script>
+  <script src="assets/js/modules/gym.js"></script>
+  <script src="assets/js/modules/meals.js"></script>
+  <script src="assets/js/modules/sleep.js"></script>
+  <script src="assets/js/modules/calendar.js"></script>
+  <script src="assets/js/modules/stats.js"></script>
+  <script src="assets/js/modules/goals.js"></script>
+  <script src="assets/js/modules/sync.js"></script>
+  <script src="assets/js/router.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

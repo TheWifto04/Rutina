@@ -13,8 +13,7 @@ html {
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  /* iPhone 14 Pro: fuera del área del Dynamic Island */
-  padding-top: env(safe-area-inset-top, 0px);
+  /* Safe areas are handled per-component, NOT on html/body */
 }
 
 body {
@@ -70,12 +69,12 @@ small { font-size: 0.8rem; }
 /* ---- HEADER ---- */
 .app-header {
   display: flex;
-  align-items: center;
+  /* Push header content below the Dynamic Island / notch */
+  align-items: flex-end;
   justify-content: space-between;
-  height: var(--header-height);
-  padding: 0 16px;
-  /* iPhone 14 Pro: espacio extra por Dynamic Island (59px de alto) */
-  padding-top: max(0px, env(safe-area-inset-top, 0px) - 12px);
+  /* Grows to accommodate any safe-area; 0px fallback = normal on Android/desktop */
+  min-height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 16px 10px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   position: sticky;
@@ -326,7 +325,7 @@ small { font-size: 0.8rem; }
    ================================================================ */
 .toast-container {
   position: fixed;
-  bottom: calc(var(--nav-height) + 16px);
+  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 16px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
@@ -491,7 +490,8 @@ small { font-size: 0.8rem; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px 24px;
+  /* Push content clear of the Dynamic Island / status bar */
+  padding: calc(env(safe-area-inset-top, 0px) + 32px) 24px calc(env(safe-area-inset-bottom, 0px) + 32px);
 }
 .lock-content { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; max-width: 320px; }
 .lock-icon {
@@ -1147,34 +1147,19 @@ canvas { border-radius: var(--border-radius-sm); }
 }
 
 /* ================================================================
-   iPHONE 14 PRO – ESPECÍFICOS
-   Pantalla: 393×852pt, Dynamic Island en la parte superior
+   SAFE AREAS – UNIVERSAL (Dynamic Island, notch, Android cutout)
+   env() always resolves to 0px on devices without cutouts, so these
+   rules are safe to apply everywhere without @supports guards.
    ================================================================ */
-@supports (padding-top: env(safe-area-inset-top)) {
-  /* Cuando hay safe area real (standalone o pantalla completa iOS) */
-  .app-header {
-    min-height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
-    padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
-    align-items: flex-end;
-    padding-bottom: 8px;
-  }
 
-  .side-drawer .drawer-panel {
-    padding-top: env(safe-area-inset-top, 0px);
-  }
+/* Drawer panel must clear the status bar when open */
+.side-drawer .drawer-panel {
+  padding-top: env(safe-area-inset-top, 0px);
+}
 
-  .lock-screen {
-    padding-top: calc(env(safe-area-inset-top, 32px) + 32px);
-  }
-
-  .toast-container {
-    bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 16px);
-  }
-
-  .modal-overlay {
-    /* Respeta el Dynamic Island en modales */
-    padding-top: env(safe-area-inset-top, 0px);
-  }
+/* Sidebar / modal safe area on left/right (landscape phones) */
+.modal-overlay {
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* ================================================================

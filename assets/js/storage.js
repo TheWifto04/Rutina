@@ -92,6 +92,13 @@ const Storage = (() => {
     // Sync
     syncConfig:    'sync_config',
     lastSync:      'last_sync',
+
+    // Water
+    waterLogs:     'water_logs',
+    waterSettings: 'water_settings',
+
+    // Weight
+    weightLogs:    'weight_logs',
   };
 
   // ----------------------------------------------------------------
@@ -201,8 +208,39 @@ const Storage = (() => {
   function saveNotifSettings(data) { return set(KEYS.notifSettings, data); }
 
   // ---- SYNC ----
-  function getSyncConfig() { return get(KEYS.syncConfig, { provider: null, enabled: false }); }
+  function getSyncConfig() { return get(KEYS.syncConfig, { provider: null, enabled: false, autoBackup: false }); }
   function saveSyncConfig(data) { return set(KEYS.syncConfig, data); }
+
+  // ---- WATER ----
+  function getWaterLog(dateStr) {
+    const logs = get(KEYS.waterLogs, {});
+    return logs[dateStr] || 0;
+  }
+  function addWater(dateStr, ml) {
+    const logs = get(KEYS.waterLogs, {});
+    logs[dateStr] = Math.max(0, (logs[dateStr] || 0) + ml);
+    // Keep last 90 days
+    const keys = Object.keys(logs).sort().reverse().slice(0, 90);
+    const pruned = {};
+    keys.forEach(k => { pruned[k] = logs[k]; });
+    return set(KEYS.waterLogs, pruned);
+  }
+  function getWaterLogs() { return get(KEYS.waterLogs, {}); }
+  function getWaterSettings() {
+    return get(KEYS.waterSettings, { goalMl: 2000 });
+  }
+  function saveWaterSettings(data) { return set(KEYS.waterSettings, data); }
+
+  // ---- WEIGHT ----
+  function getWeightLogs() { return get(KEYS.weightLogs, []); }
+  function saveWeightLogs(data) { return set(KEYS.weightLogs, data); }
+  function addWeightEntry(kg, dateStr) {
+    const logs = getWeightLogs();
+    const filtered = logs.filter(l => l.date !== dateStr);
+    filtered.push({ date: dateStr, kg: parseFloat(kg) });
+    filtered.sort((a, b) => a.date.localeCompare(b.date));
+    return saveWeightLogs(filtered.slice(-365));
+  }
 
   // ---- PIN ----
   function savePIN(pin) {
@@ -316,6 +354,8 @@ const Storage = (() => {
     getNotifQueue, saveNotifQueue,
     getNotifSettings, saveNotifSettings,
     getSyncConfig, saveSyncConfig,
+    getWaterLog, addWater, getWaterLogs, getWaterSettings, saveWaterSettings,
+    getWeightLogs, saveWeightLogs, addWeightEntry,
     savePIN, verifyPIN, isPINEnabled, disablePIN,
     setLastActive, isLocked,
     exportAll, importAll

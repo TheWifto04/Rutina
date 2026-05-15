@@ -11,17 +11,23 @@ html {
   font-size: 16px;
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* iPhone 14 Pro: fuera del área del Dynamic Island */
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
   transition: background var(--transition-slow), color var(--transition-slow);
+  /* Suavizado de fuente nativo de iOS */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a { color: inherit; text-decoration: none; }
@@ -67,17 +73,22 @@ small { font-size: 0.8rem; }
   align-items: center;
   justify-content: space-between;
   height: var(--header-height);
-  padding: 0 12px;
+  padding: 0 16px;
+  /* iPhone 14 Pro: espacio extra por Dynamic Island (59px de alto) */
+  padding-top: max(0px, env(safe-area-inset-top, 0px) - 12px);
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 100;
   flex-shrink: 0;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .header-center { flex: 1; text-align: center; }
-.page-title { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
-.header-left, .header-right { display: flex; align-items: center; gap: 4px; min-width: 80px; }
+.page-title { font-size: 1.05rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
+.header-left, .header-right { display: flex; align-items: center; gap: 2px; min-width: 88px; }
 .header-right { justify-content: flex-end; }
 
 /* ---- MAIN CONTENT ---- */
@@ -86,9 +97,14 @@ small { font-size: 0.8rem; }
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 16px 16px calc(var(--nav-height) + 16px);
+  /* Padding bottom = nav + home indicator de iPhone */
+  padding: 16px 16px calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 16px);
+  padding-left: max(16px, env(safe-area-inset-left, 16px));
+  padding-right: max(16px, env(safe-area-inset-right, 16px));
   background: var(--bg-primary);
   scroll-behavior: smooth;
+  /* Overscroll suave iOS */
+  overscroll-behavior-y: contain;
 }
 
 /* ---- BOTTOM NAV ---- */
@@ -96,7 +112,9 @@ small { font-size: 0.8rem; }
   display: flex;
   align-items: center;
   justify-content: space-around;
-  height: var(--nav-height);
+  /* Altura base + home indicator de iPhone 14 Pro (34px) */
+  height: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
   position: fixed;
@@ -104,7 +122,9 @@ small { font-size: 0.8rem; }
   left: 0;
   right: 0;
   z-index: 200;
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  /* Evitar doble padding-bottom */
+  left: env(safe-area-inset-left, 0);
+  right: env(safe-area-inset-right, 0);
 }
 
 .nav-item {
@@ -112,15 +132,17 @@ small { font-size: 0.8rem; }
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  padding: 8px 6px 4px;
+  padding: 10px 4px 6px;
   color: var(--text-muted);
   transition: color var(--transition-fast), transform var(--transition-fast);
   flex: 1;
   position: relative;
+  /* Tap target mínimo de 44pt (Apple HIG) */
+  min-height: 44px;
 }
 
-.nav-item svg { width: 22px; height: 22px; transition: stroke var(--transition-fast); }
-.nav-item span { font-size: 0.65rem; font-weight: 500; }
+.nav-item svg { width: 23px; height: 23px; transition: stroke var(--transition-fast); }
+.nav-item span { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.01em; }
 
 .nav-item.active {
   color: var(--accent);
@@ -182,16 +204,19 @@ small { font-size: 0.8rem; }
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px; height: 40px;
+  /* Tap target mínimo 44×44pt (Apple HIG) */
+  width: 44px; height: 44px;
   border-radius: 50%;
   background: transparent;
   color: var(--text-secondary);
   transition: background var(--transition-fast), color var(--transition-fast);
   position: relative;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .icon-btn svg { width: 20px; height: 20px; }
 .icon-btn:hover { background: var(--border); color: var(--text-primary); }
-.icon-btn:active { transform: scale(0.9); }
+.icon-btn:active { transform: scale(0.88); opacity: 0.7; }
 
 /* ---- INPUTS ---- */
 .input {
@@ -199,10 +224,14 @@ small { font-size: 0.8rem; }
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--border-radius-sm);
-  padding: 12px 16px;
+  /* min 44pt altura en iOS para tap target */
+  padding: 13px 16px;
   color: var(--text-primary);
-  font-size: 0.95rem;
+  /* iOS: min 16px para evitar zoom automático */
+  font-size: 16px;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  -webkit-appearance: none;
+  appearance: none;
 }
 .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-alpha); }
 .input::placeholder { color: var(--text-muted); }
@@ -1116,3 +1145,245 @@ canvas { border-radius: var(--border-radius-sm); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ================================================================
+   iPHONE 14 PRO – ESPECÍFICOS
+   Pantalla: 393×852pt, Dynamic Island en la parte superior
+   ================================================================ */
+@supports (padding-top: env(safe-area-inset-top)) {
+  /* Cuando hay safe area real (standalone o pantalla completa iOS) */
+  .app-header {
+    min-height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+    padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
+    align-items: flex-end;
+    padding-bottom: 8px;
+  }
+
+  .side-drawer .drawer-panel {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .lock-screen {
+    padding-top: calc(env(safe-area-inset-top, 32px) + 32px);
+  }
+
+  .toast-container {
+    bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 16px);
+  }
+
+  .modal-overlay {
+    /* Respeta el Dynamic Island en modales */
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* ================================================================
+   AUTOCOMPLETE (FOOD SEARCH AI)
+   ================================================================ */
+.autocomplete-wrap {
+  position: relative;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--border-radius-sm);
+  box-shadow: var(--shadow-lg);
+  z-index: 500;
+  max-height: 280px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.autocomplete-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition-fast);
+  gap: 10px;
+}
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:active,
+.autocomplete-item:hover { background: var(--accent-alpha); }
+
+.autocomplete-item-name { font-size: 0.9rem; font-weight: 600; }
+.autocomplete-item-sub  { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
+.autocomplete-item-kcal {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--meals-color);
+  flex-shrink: 0;
+}
+
+.autocomplete-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #6C63FF, #c77dff);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  letter-spacing: 0.05em;
+}
+
+/* ================================================================
+   EXERCISE LIBRARY
+   ================================================================ */
+.muscle-group-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 4px 0 12px;
+}
+.muscle-group-tabs::-webkit-scrollbar { display: none; }
+
+.muscle-tab {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.muscle-tab.active {
+  background: var(--gym-color);
+  border-color: var(--gym-color);
+  color: white;
+}
+
+.exercise-lib-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.exercise-lib-item:active { background: var(--accent-alpha); }
+.exercise-lib-name { font-weight: 600; font-size: 0.88rem; }
+.exercise-lib-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+.exercise-lib-add {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--accent-alpha);
+  color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+/* ================================================================
+   WATER TRACKER
+   ================================================================ */
+.water-tracker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.water-icon { font-size: 1.5rem; }
+.water-info { flex: 1; }
+.water-amount { font-size: 1.1rem; font-weight: 800; }
+.water-goal   { font-size: 0.78rem; color: var(--text-muted); }
+.water-btns   { display: flex; gap: 6px; }
+.water-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--info-alpha);
+  color: var(--info);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; font-weight: 700;
+  transition: all var(--transition-fast);
+}
+.water-btn:active { transform: scale(0.9); }
+
+/* ================================================================
+   WEIGHT TRACKER
+   ================================================================ */
+.weight-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  padding: 16px;
+  margin-bottom: 10px;
+}
+.weight-current {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--accent);
+}
+.weight-change-pos { color: var(--danger); font-size: 0.85rem; font-weight: 700; }
+.weight-change-neg { color: var(--success); font-size: 0.85rem; font-weight: 700; }
+
+/* ================================================================
+   SETTINGS PAGE
+   ================================================================ */
+.settings-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.settings-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 10px 16px 6px;
+  background: var(--bg-elevated);
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-row:active { background: var(--bg-elevated); }
+.settings-row-left { display: flex; align-items: center; gap: 12px; }
+.settings-row-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+}
+.settings-row-info h4 { font-size: 0.9rem; font-weight: 600; }
+.settings-row-info p  { font-size: 0.78rem; color: var(--text-muted); margin-top: 1px; }
+.settings-row-right { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.85rem; }
+.settings-row-right svg { width: 14px; height: 14px; }

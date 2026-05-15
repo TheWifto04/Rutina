@@ -350,6 +350,126 @@
   }
 
   // ================================================================
+  // WATER TRACKER (home widget)
+  // ================================================================
+  function addWaterHome(ml) {
+    const today = Utils.today();
+    Storage.addWater(today, ml);
+    Utils.haptic([10]);
+    // Re-render just the water widget
+    const waterEl = document.getElementById('water-widget');
+    if (waterEl) {
+      const waterSettings = Storage.getWaterSettings();
+      const goal = waterSettings.goalMl || 2000;
+      const current = Storage.getWaterLog(today);
+      const pct = Utils.pct(current, goal);
+      waterEl.innerHTML = _buildWaterWidget(current, goal, pct);
+    }
+  }
+
+  function _buildWaterWidget(current, goal, pct) {
+    const glasses = Math.round(current / 250);
+    return `
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="water-icon">💧</div>
+        <div class="water-info">
+          <div class="water-amount">${current} ml</div>
+          <div class="water-goal">objetivo: ${goal} ml · ~${glasses} vasos</div>
+          <div class="progress-bar-wrap" style="margin-top:6px">
+            <div class="progress-bar-fill ${current >= goal ? 'success' : ''}" style="width:${pct}%;background:var(--info)"></div>
+          </div>
+        </div>
+      </div>
+      <div class="water-btns" style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-ghost" style="font-size:0.78rem;padding:6px 10px;flex:1" onclick="App.addWaterHome(150)">+150ml</button>
+        <button class="btn btn-ghost" style="font-size:0.78rem;padding:6px 10px;flex:1" onclick="App.addWaterHome(250)">+250ml</button>
+        <button class="btn btn-ghost" style="font-size:0.78rem;padding:6px 10px;flex:1" onclick="App.addWaterHome(330)">+330ml</button>
+        <button class="btn btn-ghost" style="font-size:0.78rem;padding:6px 10px;flex:1" onclick="App.addWaterHome(500)">+500ml</button>
+        ${current > 0 ? `<button class="btn btn-ghost" style="font-size:0.78rem;padding:6px 10px;flex:1;color:var(--danger)" onclick="App.addWaterHome(-250)">−250ml</button>` : ''}
+      </div>
+    `;
+  }
+
+  // ================================================================
+  // WEIGHT LOG MODAL (home)
+  // ================================================================
+  function openWeightModal() {
+    const weightLogs = Storage.getWeightLogs();
+    const today = Utils.today();
+    const todayEntry = weightLogs.find(l => l.date === today);
+    const lastEntry = weightLogs.length > 0 ? weightLogs[weightLogs.length - 1] : null;
+    const prevEntry = weightLogs.length > 1 ? weightLogs[weightLogs.length - 2] : null;
+    const diff = lastEntry && prevEntry ? (lastEntry.kg - prevEntry.kg) : null;
+
+    openModal(`
+      <h3 style="margin-bottom:16px">⚖️ Peso corporal</h3>
+      <div class="input-group" style="margin-bottom:16px">
+        <label class="input-label">Peso de hoy (kg)</label>
+        <input type="number" id="weight-input" class="input" min="30" max="300" step="0.1"
+          value="${todayEntry ? todayEntry.kg : (lastEntry ? lastEntry.kg : '')}"
+          placeholder="ej. 75.5" inputmode="decimal" />
+      </div>
+      ${lastEntry ? `
+      <div style="display:flex;gap:12px;margin-bottom:16px">
+        <div class="card" style="flex:1;text-align:center;padding:12px">
+          <div style="font-size:1.4rem;font-weight:800;color:var(--accent)">${lastEntry.kg} kg</div>
+          <div style="font-size:0.75rem;color:var(--text-muted)">último registro</div>
+        </div>
+        ${diff !== null ? `<div class="card" style="flex:1;text-align:center;padding:12px">
+          <div style="font-size:1.4rem;font-weight:800;color:${diff > 0 ? 'var(--danger)' : diff < 0 ? 'var(--success)' : 'var(--text-muted)'}">${diff > 0 ? '+' : ''}${diff.toFixed(1)} kg</div>
+          <div style="font-size:0.75rem;color:var(--text-muted)">variación</div>
+        </div>` : ''}
+      </div>` : ''}
+      <button class="btn btn-primary btn-full" onclick="App.saveWeight()">Guardar peso</button>
+      ${weightLogs.length >= 2 ? `
+      <p class="section-title" style="margin-top:16px">Últimas 10 entradas</p>
+      <div style="max-height:160px;overflow-y:auto">
+        ${weightLogs.slice(-10).reverse().map(l => `
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.85rem">
+            <span style="color:var(--text-muted)">${Utils.formatShortDate(l.date)}</span>
+            <span style="font-weight:700">${l.kg} kg</span>
+          </div>`).join('')}
+      </div>` : ''}
+    `);
+  }
+
+  function saveWeight() {
+    const val = parseFloat(document.getElementById('weight-input')?.value);
+    if (!val || val < 20 || val > 400) { showToast('Introduce un peso válido', 'error'); return; }
+    Storage.addWeightEntry(val, Utils.today());
+    closeModal();
+    showToast(`Peso registrado: ${val} kg`, 'success');
+    Utils.haptic([10, 50, 10]);
+    // Refresh home weight card
+    const wCard = document.getElementById('weight-widget');
+    if (wCard) wCard.outerHTML = _buildWeightWidget();
+    GoalsModule?.checkAchievements?.();
+  }
+
+  function _buildWeightWidget() {
+    const weightLogs = Storage.getWeightLogs();
+    const lastEntry = weightLogs.length > 0 ? weightLogs[weightLogs.length - 1] : null;
+    const prevEntry = weightLogs.length > 1 ? weightLogs[weightLogs.length - 2] : null;
+    const diff = lastEntry && prevEntry ? (lastEntry.kg - prevEntry.kg).toFixed(1) : null;
+    return `
+      <div id="weight-widget" class="card card-clickable" onclick="App.openWeightModal()" style="margin-bottom:10px">
+        <div class="card-header">
+          <span class="card-title">⚖️ Peso corporal</span>
+          ${lastEntry?.date === Utils.today() ? '<span class="badge badge-success">Hoy ✓</span>' : '<span class="badge">Registrar</span>'}
+        </div>
+        ${lastEntry ? `
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span class="weight-current">${lastEntry.kg} kg</span>
+            ${diff !== null ? `<span class="${parseFloat(diff) > 0 ? 'weight-change-pos' : parseFloat(diff) < 0 ? 'weight-change-neg' : ''}">${parseFloat(diff) > 0 ? '↑' : parseFloat(diff) < 0 ? '↓' : '→'} ${Math.abs(diff)} kg</span>` : ''}
+          </div>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px">
+            ${lastEntry.date === Utils.today() ? 'Registrado hoy' : `Último: ${Utils.formatShortDate(lastEntry.date)}`}
+          </div>` : `
+          <div style="color:var(--text-muted);font-size:0.9rem">Sin datos — toca para registrar</div>`}
+      </div>`;
+  }
+
+  // ================================================================
   // HOME VIEW
   // ================================================================
   function renderHome() {
@@ -371,6 +491,10 @@
     const level = Math.floor(xp / 100) + 1;
     const xpForLevel = (level - 1) * 100;
     const xpNext = level * 100;
+    const waterSettings = Storage.getWaterSettings();
+    const waterGoal = waterSettings.goalMl || 2000;
+    const waterCurrent = Storage.getWaterLog(today);
+    const waterPct = Utils.pct(waterCurrent, waterGoal);
 
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
@@ -468,20 +592,428 @@
           }
         </div>
       </div>
+
+      <!-- Water & Weight row -->
+      <p class="section-title">Hidratación &amp; peso</p>
+
+      <!-- Water tracker -->
+      <div class="card water-card" style="margin-bottom:10px">
+        <div class="card-header" style="margin-bottom:8px">
+          <span class="card-title">💧 Agua</span>
+          <span class="badge" style="${waterCurrent >= waterGoal ? 'background:var(--success-alpha);color:var(--success)' : ''}">
+            ${waterCurrent >= waterGoal ? '¡Meta! 🎉' : Math.round((waterGoal - waterCurrent)/1000*10)/10 + 'L restante'}
+          </span>
+        </div>
+        <div id="water-widget">
+          ${_buildWaterWidget(waterCurrent, waterGoal, waterPct)}
+        </div>
+      </div>
+
+      <!-- Weight card -->
+      ${_buildWeightWidget()}
+
     </div>`;
+  }
+
+  // ================================================================
+  // SETTINGS VIEW
+  // ================================================================
+  function renderSettings() {
+    const settings  = Storage.getSettings();
+    const mealSet   = Storage.getMealSettings();
+    const sleepSet  = Storage.getSleepSettings();
+    const waterSet  = Storage.getWaterSettings();
+    const syncConf  = Storage.getSyncConfig();
+    const theme     = Storage.get(Storage.KEYS.theme, 'auto');
+    const pinOn     = Storage.isPINEnabled();
+    const version   = '1.0.0';
+
+    return `
+    <div class="anim-fade-in stagger">
+      <p class="section-title">PERFIL</p>
+      <div class="settings-section">
+        <div class="settings-row" onclick="App.editProfileModal()">
+          <div class="settings-row-left">
+            <div class="settings-row-icon" style="background:var(--accent-alpha)">👤</div>
+            <div class="settings-row-info">
+              <h4>${Utils.escapeHtml(settings.userName || 'Usuario')}</h4>
+              <p>Nombre de usuario</p>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <p class="section-title">OBJETIVOS</p>
+      <div class="settings-section">
+        <div class="settings-row" onclick="App.editGoalsSettingsModal()">
+          <div class="settings-row-left">
+            <div class="settings-row-icon" style="background:rgba(255,180,0,0.15)">🎯</div>
+            <div class="settings-row-info">
+              <h4>Calorías diarias</h4>
+              <p>${mealSet.calGoal || 2200} kcal · Proteína: ${mealSet.proteinGoal || 150}g</p>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+        <div class="settings-row" onclick="App.editSleepGoalModal()">
+          <div class="settings-row-left">
+            <div class="settings-row-icon" style="background:rgba(99,179,237,0.15)">😴</div>
+            <div class="settings-row-info">
+              <h4>Horas de sueño</h4>
+              <p>Objetivo: ${sleepSet.goalHours || 8}h · Dormir: ${sleepSet.targetBedtime || '23:00'}</p>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+        <div class="settings-row" onclick="App.editWaterGoalModal()">
+          <div class="settings-row-left">
+            <div class="settings-row-icon" style="background:rgba(49,130,206,0.15)">💧</div>
+            <div class="settings-row-info">
+              <h4>Agua diaria</h4>
+              <p>Objetivo: ${(waterSet.goalMl || 2000) / 1000} litros</p>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <p class="section-title">APARIENCIA</p>
+      <div class="settings-section">
+        <div class="settings-row">
+          <div class="settings-row-left">
+            <div class="settings-row-icon" style="background:rgba(108,99,255,0.15)">🎨</div>
+            <div class="settings-row-info">
+              <h4>Tema</h4>
+              <p>Actual: ${theme === 'auto' ? 'Automático' : theme === 'dark' ? 'Oscuro' : 'Claro'}</p>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <div style="display:flex;gap:6px">
+              ${['dark','light','auto'].map(t => `
+                <button class="btn ${theme===t ? 'btn-primary' : 'btn-ghost'}" style="font-size:0.75rem;padding:5px 10px"
+                  onclick="App.applyTheme('${t}');Router.navigate('settings')">${t==='dark'?'🌙 Oscuro':t==='light'?'☀️ Claro':'🔄 Auto'}</button>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="section-title">SEGURIDAD</p>
+      <div class="settings-section">
+        <div class="settings-row" onclick="App.openPINSetup()">
+          <div class="settings-row-left">
+            <div class="settings-row-icon" style="background:rgba(245,101,101,0.15)">🔒</div>
+            <div class="settings-row-info">
+              <h4>PIN de bloqueo</h4>
+              <p>${pinOn ? '✅ Activado' : 'Sin configurar'}</p>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+        ${pinOn ? `
+        <div class="settings-row" onclick="App.editLockTimeModal()">
+          <div class="settings-row-left">
+            <div class="settings-row-icon" style="background:rgba(245,101,101,0.1)">⏱️</div>
+            <div class="settings-row-info">
+              <h4>Bloquear después de</h4>
+              <p>${settings.lockAfterMins || 5} minutos de inactividad</p>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>` : ''}
+      </div>
+
+      <p class="section-title">NOTIFICACIONES</p>
+      <div class="settings-section">
+        <div class="settings-row" onclick="Notifications.showSettings()">
+          <div class="settings-row-left">
+            <div class="settings-row-icon" style="background:rgba(56,189,248,0.15)">🔔</div>
+            <div class="settings-row-info">
+              <h4>Recordatorios</h4>
+              <p>Gym, comidas, sueño y más</p>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <p class="section-title">DATOS</p>
+      <div class="settings-section">
+        <div class="settings-row" onclick="SyncModule.showSyncPanel()">
+          <div class="settings-row-left">
+            <div class="settings-row-icon" style="background:rgba(72,187,120,0.15)">☁️</div>
+            <div class="settings-row-info">
+              <h4>Sincronización</h4>
+              <p>Exportar, importar, backup</p>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+        <div class="settings-row" onclick="App.exportDataQuick()">
+          <div class="settings-row-left">
+            <div class="settings-row-icon" style="background:rgba(72,187,120,0.1)">📄</div>
+            <div class="settings-row-info">
+              <h4>Exportar JSON</h4>
+              <p>Copia de seguridad completa</p>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+        <div class="settings-row" onclick="document.getElementById('file-import').click()">
+          <div class="settings-row-left">
+            <div class="settings-row-icon" style="background:rgba(72,187,120,0.1)">📂</div>
+            <div class="settings-row-info">
+              <h4>Importar datos</h4>
+              <p>Restaurar desde backup JSON</p>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+        <div class="settings-row" onclick="App.confirmClearData()" style="color:var(--danger)">
+          <div class="settings-row-left">
+            <div class="settings-row-icon" style="background:rgba(245,101,101,0.15)">🗑️</div>
+            <div class="settings-row-info">
+              <h4 style="color:var(--danger)">Borrar todos los datos</h4>
+              <p>Esta acción es irreversible</p>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <p class="section-title">ACERCA DE</p>
+      <div class="settings-section">
+        <div class="settings-row" style="cursor:default">
+          <div class="settings-row-left">
+            <div class="settings-row-icon" style="background:var(--accent-alpha)">✨</div>
+            <div class="settings-row-info">
+              <h4>Rutina App</h4>
+              <p>Versión ${version} · PWA</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:24px"></div>
+    </div>`;
+  }
+
+  // Settings helpers
+  function editProfileModal() {
+    const settings = Storage.getSettings();
+    openModal(`
+      <h3 style="margin-bottom:16px">Editar perfil</h3>
+      <div class="input-group" style="margin-bottom:20px">
+        <label class="input-label">Tu nombre</label>
+        <input type="text" id="set-username" class="input" value="${Utils.escapeHtml(settings.userName || '')}" placeholder="¿Cómo te llamas?" maxlength="30" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="App.saveProfileModal()">Guardar</button>
+    `);
+  }
+
+  function saveProfileModal() {
+    const name = document.getElementById('set-username')?.value.trim();
+    if (!name) { showToast('Introduce tu nombre', 'error'); return; }
+    const settings = Storage.getSettings();
+    settings.userName = name;
+    Storage.saveSettings(settings);
+    closeModal();
+    updateDrawerUser();
+    showToast('Perfil actualizado', 'success');
+    Router.navigate('settings');
+  }
+
+  function editGoalsSettingsModal() {
+    const mealSet = Storage.getMealSettings();
+    openModal(`
+      <h3 style="margin-bottom:16px">Objetivos nutricionales</h3>
+      <div class="input-group" style="margin-bottom:12px">
+        <label class="input-label">Calorías diarias (kcal)</label>
+        <input type="number" id="set-cal" class="input" value="${mealSet.calGoal || 2200}" min="1000" max="6000" inputmode="numeric" />
+      </div>
+      <div class="input-group" style="margin-bottom:12px">
+        <label class="input-label">Proteína (g)</label>
+        <input type="number" id="set-prot" class="input" value="${mealSet.proteinGoal || 150}" min="30" max="400" inputmode="numeric" />
+      </div>
+      <div class="input-group" style="margin-bottom:12px">
+        <label class="input-label">Carbohidratos (g)</label>
+        <input type="number" id="set-carbs" class="input" value="${mealSet.carbsGoal || 250}" min="30" max="600" inputmode="numeric" />
+      </div>
+      <div class="input-group" style="margin-bottom:20px">
+        <label class="input-label">Grasas (g)</label>
+        <input type="number" id="set-fat" class="input" value="${mealSet.fatGoal || 70}" min="10" max="300" inputmode="numeric" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="App.saveGoalsSettings()">Guardar</button>
+    `);
+  }
+
+  function saveGoalsSettings() {
+    const mealSet = Storage.getMealSettings();
+    mealSet.calGoal     = parseInt(document.getElementById('set-cal')?.value) || 2200;
+    mealSet.proteinGoal = parseInt(document.getElementById('set-prot')?.value) || 150;
+    mealSet.carbsGoal   = parseInt(document.getElementById('set-carbs')?.value) || 250;
+    mealSet.fatGoal     = parseInt(document.getElementById('set-fat')?.value) || 70;
+    Storage.saveMealSettings(mealSet);
+    closeModal();
+    showToast('Objetivos guardados', 'success');
+    Router.navigate('settings');
+  }
+
+  function editSleepGoalModal() {
+    const sleepSet = Storage.getSleepSettings();
+    openModal(`
+      <h3 style="margin-bottom:16px">Objetivos de sueño</h3>
+      <div class="input-group" style="margin-bottom:12px">
+        <label class="input-label">Horas de sueño objetivo</label>
+        <input type="number" id="set-sleep-h" class="input" value="${sleepSet.goalHours || 8}" min="4" max="12" step="0.5" inputmode="decimal" />
+      </div>
+      <div class="input-group" style="margin-bottom:12px">
+        <label class="input-label">Hora de dormir</label>
+        <input type="time" id="set-bedtime" class="input" value="${sleepSet.targetBedtime || '23:00'}" />
+      </div>
+      <div class="input-group" style="margin-bottom:20px">
+        <label class="input-label">Hora de despertar</label>
+        <input type="time" id="set-wakeup" class="input" value="${sleepSet.targetWakeup || '07:00'}" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="App.saveSleepGoalModal()">Guardar</button>
+    `);
+  }
+
+  function saveSleepGoalModal() {
+    const sleepSet = Storage.getSleepSettings();
+    sleepSet.goalHours    = parseFloat(document.getElementById('set-sleep-h')?.value) || 8;
+    sleepSet.targetBedtime = document.getElementById('set-bedtime')?.value || '23:00';
+    sleepSet.targetWakeup  = document.getElementById('set-wakeup')?.value || '07:00';
+    Storage.saveSleepSettings(sleepSet);
+    closeModal();
+    showToast('Objetivos de sueño guardados', 'success');
+    Router.navigate('settings');
+  }
+
+  function editWaterGoalModal() {
+    const waterSet = Storage.getWaterSettings();
+    openModal(`
+      <h3 style="margin-bottom:16px">Objetivo de agua</h3>
+      <div class="input-group" style="margin-bottom:8px">
+        <label class="input-label">Litros diarios</label>
+        <input type="number" id="set-water" class="input" value="${(waterSet.goalMl || 2000) / 1000}" min="0.5" max="6" step="0.1" inputmode="decimal" />
+      </div>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:20px">Recomendación: 2–3 litros/día. Puedes aumentar si haces deporte.</p>
+      <button class="btn btn-primary btn-full" onclick="App.saveWaterGoalModal()">Guardar</button>
+    `);
+  }
+
+  function saveWaterGoalModal() {
+    const liters = parseFloat(document.getElementById('set-water')?.value) || 2;
+    const waterSet = Storage.getWaterSettings();
+    waterSet.goalMl = Math.round(liters * 1000);
+    Storage.saveWaterSettings(waterSet);
+    closeModal();
+    showToast('Objetivo de agua guardado', 'success');
+    Router.navigate('settings');
+  }
+
+  function editLockTimeModal() {
+    const settings = Storage.getSettings();
+    openModal(`
+      <h3 style="margin-bottom:16px">Tiempo de bloqueo</h3>
+      <p style="color:var(--text-muted);margin-bottom:16px;font-size:0.9rem">La app se bloqueará con PIN después de este tiempo de inactividad.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">
+        ${[1, 2, 5, 10, 15, 30].map(mins => `
+          <button class="btn ${(settings.lockAfterMins || 5) === mins ? 'btn-primary' : 'btn-secondary'}"
+            onclick="App.saveLockTime(${mins})">${mins} min</button>`).join('')}
+      </div>
+    `);
+  }
+
+  function saveLockTime(mins) {
+    const settings = Storage.getSettings();
+    settings.lockAfterMins = mins;
+    Storage.saveSettings(settings);
+    closeModal();
+    showToast(`Bloqueo tras ${mins} minutos`, 'success');
+    Router.navigate('settings');
+  }
+
+  function openPINSetup() {
+    openModal(`
+      <h3>Configurar PIN</h3>
+      <p style="color:var(--text-muted);margin:8px 0 20px">El PIN protege el acceso a la app.</p>
+      <div class="input-group" style="margin-bottom:12px">
+        <label class="input-label">Nuevo PIN (4 dígitos)</label>
+        <input type="password" id="pin-new" class="input" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" placeholder="••••" />
+      </div>
+      <div class="input-group" style="margin-bottom:20px">
+        <label class="input-label">Confirmar PIN</label>
+        <input type="password" id="pin-confirm" class="input" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" placeholder="••••" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="App.savePINSetup()">Guardar PIN</button>
+      ${Storage.isPINEnabled() ? '<button class="btn btn-danger btn-full" style="margin-top:8px" onclick="App.removePIN()">Eliminar PIN</button>' : ''}
+    `);
+  }
+
+  function exportDataQuick() {
+    const data = Storage.exportAll();
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `rutina-app-backup-${Utils.today()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Datos exportados', 'success');
+  }
+
+  function confirmClearData() {
+    openModal(`
+      <h3 style="color:var(--danger);margin-bottom:12px">⚠️ Borrar todos los datos</h3>
+      <p style="color:var(--text-muted);margin-bottom:20px">Esta acción borrará todo: rutinas, comidas, sueño, logros y configuración. Es irreversible.</p>
+      <button class="btn btn-danger btn-full" onclick="App.clearAllData()">Sí, borrar todo</button>
+      <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="closeModal()">Cancelar</button>
+    `);
+  }
+
+  function clearAllData() {
+    Storage.clear();
+    closeModal();
+    showToast('Todos los datos eliminados', 'info');
+    setTimeout(() => location.reload(), 1000);
   }
 
   // ================================================================
   // REGISTER ROUTES
   // ================================================================
   function registerRoutes() {
-    Router.register('home', renderHome);
+    Router.register('home',     renderHome);
     Router.register('gym',      GymModule.render,      GymModule.onEnter);
     Router.register('meals',    MealsModule.render,    MealsModule.onEnter);
     Router.register('sleep',    SleepModule.render,    SleepModule.onEnter);
     Router.register('calendar', CalendarModule.render, CalendarModule.onEnter);
     Router.register('stats',    StatsModule.render,    StatsModule.onEnter);
     Router.register('goals',    GoalsModule.render,    GoalsModule.onEnter);
+    Router.register('settings', renderSettings);
   }
 
   // ================================================================
@@ -527,6 +1059,10 @@
 
     // Inicializar módulos
     Notifications.init();
+    // Comprobar logros al arrancar (sin notificaciones intrusivas)
+    requestAnimationFrame(() => {
+      try { GoalsModule.checkAchievements(); } catch(e) {}
+    });
 
     // Registrar rutas y lanzar router
     registerRoutes();
@@ -540,7 +1076,40 @@
   });
 
   // Exponer funciones necesarias
-  window.App = { savePINSetup, removePIN, clearNotifs, updateDrawerUser, updateNotifBadge, applyTheme };
+  window.App = {
+    savePINSetup, removePIN, clearNotifs, updateDrawerUser, updateNotifBadge, applyTheme,
+    // Water / Weight
+    addWaterHome, openWeightModal, saveWeight,
+    // Settings helpers
+    editProfileModal, saveProfileModal,
+    editGoalsSettingsModal, saveGoalsSettings,
+    editSleepGoalModal, saveSleepGoalModal,
+    editWaterGoalModal, saveWaterGoalModal,
+    editLockTimeModal, saveLockTime,
+    openPINSetup,
+    exportDataQuick, confirmClearData, clearAllData,
+  };
+
+  // Arrancar
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})(); clearAllData,
+  };
+
+  // Arrancar
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+    clearAllData,
+  };
 
   // Arrancar
   if (document.readyState === 'loading') {
